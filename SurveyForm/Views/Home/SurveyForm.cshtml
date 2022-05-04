@@ -1,0 +1,90 @@
+﻿@model Survey
+
+@{
+    ViewData["Title"] = "Опрос";
+}
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<style>
+    .center {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%);
+    }
+    #cardContent {
+        margin: 5%;
+    }
+    
+    input[type='radio'] {
+        margin-right: 5px;
+        margin-left: 15px;
+    }
+    
+    .required
+    {
+        color: red;
+    }
+</style>
+
+<script>
+function submitForm() {
+    const $inputs = $('#SurveyForm :input');
+    let errorFields = [];
+    let isGroupOfRadios = false;
+    let isRadioGroupSelected = false;
+    
+    for (let i = 0; i < $inputs.length; i++) {
+        if ($inputs[i].id === "QuestionId") {
+            continue;    
+        }
+        if ($inputs[i].id !== "") {
+            isGroupOfRadios = true;
+            if ($inputs[i].checked) {
+                isRadioGroupSelected = true;
+            }
+        }
+        else {
+            if (isGroupOfRadios && !isRadioGroupSelected) {
+                errorFields.push($inputs[i - 1].name);
+                isGroupOfRadios = false;
+            }
+            else {
+                isGroupOfRadios = false;
+                isRadioGroupSelected = false;
+            }
+            
+            if ($inputs[i].value === "") {
+                errorFields.push($inputs[i].name);
+            }
+        }
+    }
+    
+    const errorFieldsSet = Array.from(new Set(errorFields));
+    let errorFieldsString = "";
+    
+    for (let i = 0; i < errorFieldsSet.length; i++) {
+        errorFieldsString += errorFieldsSet[i] + '\n';
+    }    
+    
+    if (errorFields.length > 0) {
+        alert("Данные поля не заполнены:\n" + errorFieldsString);
+        return false;
+    }
+    
+    return true;
+}
+</script>
+
+<div class="card center">
+    <div id="cardContent">
+        <form action="/Home/SubmitSurvey" method="post" id="SurveyForm">
+            @foreach (var question in Model.Questions)
+            {
+                <h4>@question.Text<span class="required">*</span></h4>
+                <input hidden name="@question.Text" id="QuestionId" value="@question.Id" />
+                @Html.CreateAnswerForm(question)
+                <hr>
+            }
+            <input type="submit" value="Отправить" onclick="return submitForm()"/>
+        </form>
+    </div>
+</div>
